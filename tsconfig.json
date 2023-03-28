@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-      "target": "ES2017",
+      "target": "es2015",
       "module": "commonjs",
       "lib": ["es2017"],
       "sourceMap": true,
@@ -11,10 +11,9 @@
       "experimentalDecorators": true
     },
     "include": [
-      "src/**/*.ts"
-, "config/sequelize.ts", "seeders/addCase.ts"    ],
+      "src/**/*.ts", "config/sequelize.ts", "seeders/addCase.ts"],
     "exclude": [
       "node_modules"
     ]
-  }
+}
   

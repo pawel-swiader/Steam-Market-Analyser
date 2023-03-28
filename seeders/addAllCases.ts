@@ -1,6 +1,5 @@
 import Case from '../models/Case';
 
-// Function which adds all cases to 'cases' table in database
 export async function addAllCases() {
     const casesToAdd = [
       {
@@ -205,5 +204,5 @@ export async function addAllCases() {
       console.log(`New case created: ${newCase.case_name}`);
     });
   
-    console.log(`Added ${casesToAdd.length} cases to the database.`);
+    console.log(`Added ${casesToAdd.length} cases to the 'cases' table.`);
   }

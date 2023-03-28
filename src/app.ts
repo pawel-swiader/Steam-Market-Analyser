@@ -1,4 +1,6 @@
 // npx ts-node src/app.ts
-import { setDatabase } from '../seeders/setDatabase'
+import { printCases } from './fetchData';
+import { setDatabase } from '../seeders/setDatabase';
 
-setDatabase();
+// setDatabase();
+printCases();

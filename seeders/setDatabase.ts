@@ -1,7 +1,7 @@
-import { addAllTables } from "../seeders/addAllTables";
+import { syncAllTables } from "./syncAllTables";
 import { addAllCases } from "../seeders/addAllCases";
 
 export async function setDatabase() {
-    await addAllTables();
+    await syncAllTables();
     await addAllCases();
 }
