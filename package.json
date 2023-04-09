@@ -1,7 +1,6 @@
 {
   "dependencies": {
     "@types/node": "^18.15.11",
-    "cheerio": "^1.0.0-rc.12",
     "fs": "^0.0.1-security",
     "mysql2": "^3.2.0",
     "path": "^0.12.7",

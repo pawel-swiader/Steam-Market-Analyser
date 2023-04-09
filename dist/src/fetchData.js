@@ -13,10 +13,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchData = void 0;
-const sequelize_1 = require("../config/sequelize");
 const Case_1 = __importDefault(require("../models/Case"));
 const puppeteer_1 = __importDefault(require("puppeteer"));
 const promises_1 = require("timers/promises");
+const cases_1 = __importDefault(require("../models/cases"));
 const cheerio = require('cheerio');
 function getTableName(caseName) {
     return caseName
@@ -24,6 +24,15 @@ function getTableName(caseName) {
         .replace(/:/g, '')
         .replace(/ /g, '_')
         .replace(/&/g, 'and');
+}
+function getModelByTableName(tableName) {
+    const modelFound = cases_1.default.find(model => model.tableName === tableName);
+    if (modelFound)
+        return modelFound;
+    else {
+        console.log('Couldnt find model');
+        return null;
+    }
 }
 function fetchData() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -37,8 +46,7 @@ function fetchData() {
         const browser = yield puppeteer_1.default.launch();
         const minute = 60000;
         // Iterate through array of all cases
-        // cases.length
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < cases.length; i++) {
             const caseInstance = cases[i];
             const url = caseInstance.case_link;
             const caseName = caseInstance.case_name;
@@ -47,6 +55,7 @@ function fetchData() {
             while (!pageLoaded) {
                 try {
                     yield page.goto(url, { waitUntil: 'networkidle0' });
+                    console.log(page.url.toString());
                     pageLoaded = true;
                 }
                 catch (error) {
@@ -58,14 +67,15 @@ function fetchData() {
             const quantity = elements[0];
             const price = elements[1];
             let elementsLoaded = false;
-            let priceValue = "-";
-            let quantityValue = "-";
+            let priceValue = null;
+            let quantityValue = null;
             const maxAttempts = 3;
             for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                 try {
                     priceValue = yield page.evaluate((el) => el.textContent, price);
                     quantityValue = yield page.evaluate((el) => el.textContent, quantity);
                     elementsLoaded = true;
+                    break;
                 }
                 catch (_a) {
                     const pageContent = yield page.content();
@@ -73,32 +83,30 @@ function fetchData() {
                     const h1Content = $('h1').html();
                     console.log('Page h1 content:', h1Content);
                     console.log(`During attempt no. ${attempt}.`);
-                    if (attempt < maxAttempts) {
+                    if (attempt <= maxAttempts) {
                         console.log(`Retrying in 5 minutes.`);
                         yield (0, promises_1.setTimeout)(5 * minute);
                         yield page.goto(url, { waitUntil: 'networkidle0' });
                     }
                 }
             }
-            if (elementsLoaded === true) {
-                // Select model for current case
-                const CaseModelTableName = getTableName(caseName);
-                const CaseModel = sequelize_1.sequelize.models[CaseModelTableName];
-                const lastLogId = yield CaseModel.max('log_id');
-                const logId = lastLogId ? lastLogId + 1 : 1;
-                const now = new Date();
-                const formattedDate = now.toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' });
-                const casePriceUSD = parseFloat(priceValue.replace('$', ''));
-                const caseQuantity = parseInt(quantityValue);
-                yield CaseModel.upsert({
-                    log_id: logId,
-                    fetch_date: formattedDate,
-                    case_price_USD: casePriceUSD,
-                    case_quantity: caseQuantity,
-                });
-            }
-            else {
-                console.log(`Couldn't fetch value in ${maxAttempts} attempts so it's set to '-'.`);
+            const CaseModelTableName = getTableName(caseName);
+            console.log(`\n${CaseModelTableName}`);
+            const CaseModel = yield getModelByTableName(CaseModelTableName);
+            const lastLogId = yield CaseModel.max('log_id');
+            const logId = lastLogId ? lastLogId + 1 : 1;
+            const now = new Date();
+            const formattedDate = now.toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' });
+            // const casePriceUSD = parseFloat(priceValue.replace('$', ''));
+            // const caseQuantity = parseInt(quantityValue);
+            yield CaseModel.upsert({
+                log_id: logId,
+                fetch_date: formattedDate,
+                case_price_USD: priceValue ? parseFloat(priceValue.replace('$', '')) : priceValue,
+                case_quantity: quantityValue ? parseInt(quantityValue) : quantityValue,
+            });
+            if (elementsLoaded === false) {
+                console.log(`Couldn't fetch value in ${maxAttempts} attempts so it's set to null.`);
             }
             console.log(`${i + 1}/${cases.length} ${caseName}: price --> ${priceValue}, quantity --> ${quantityValue}`);
             yield page.close();
