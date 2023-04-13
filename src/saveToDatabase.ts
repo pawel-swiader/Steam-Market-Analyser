@@ -4,10 +4,12 @@ export async function saveToDatabase(caseName: string, CaseModel: any, priceValu
     const lastLogId = await CaseModel.max('log_id');
     const logId = lastLogId ? lastLogId + 1 : 1;
     const now = new Date();
-    const formattedDate = now.toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' });
-
-    const price = parseFloat(priceValue.toString().replace('$', ''));
+    const formattedDate = now.toISOString();
+    
+    const price = parseFloat(priceValue.toString().replace('$', '')).toFixed(2);
     const quantity = parseInt(quantityValue.toString());
+
+    console.log(price);
 
     await CaseModel.upsert({
       log_id: logId,

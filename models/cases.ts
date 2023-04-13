@@ -25,7 +25,7 @@ for (let i = 0; i < tableNames.length; i++) {
                 type: DataTypes.DATE,
             },
             case_price_USD: {
-                type: DataTypes.FLOAT,
+                type: DataTypes.FLOAT(6,2),
             },
             case_quantity: {
                 type: DataTypes.INTEGER.UNSIGNED,
